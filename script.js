@@ -7,7 +7,6 @@ show @n kwjre
 
 */
 
-
 function token (type,name,value){
 
    var data = {
@@ -18,6 +17,10 @@ function token (type,name,value){
 
    return data
 
+}
+
+function debug(elem){
+  document.getElementById("debug").value+=elem+NEWLINE;
 }
 
 var WHITE_SPACE = " ";
@@ -45,7 +48,7 @@ function lexicalAnalyser(area_id){
    for(var i=0;i<KEYWORDS.length;i++){
       treatedString=treatedString.replace(KEYWORDS[i],WHITE_SPACE + REP[i] + WHITE_SPACE);
    }
-   console.log("treatedStr ->",treatedString);
+   ///console.log("treatedStr ->",treatedString);
    var statements = treatedString.split(WHITE_SPACE);
 
    return statements.filter(Boolean);
@@ -55,25 +58,26 @@ function tokeniser(statements){
    var tokens = [];
    var ongoingString =[];
 
-   console.log("statements ->",statements);
+   ///console.log("statements ->",statements);
    //for(var j=0;j<statements.length;j++){
       //var currentStatement = statements[j];
       //console.log("currentStatement ",currentStatement);
       var words = statements;//currentStatement.split(" ");
       var isStringOn = false;
 
-      console.log("words ->",words);
+      ///console.log("words ->",words);
       for(var i=0;i<words.length;i++){
          var currentWord = words[i];
-         console.log("currentWord ->",currentWord);
+         ///console.log("currentWord ->",currentWord);
          var nextWord = words[i+1];
          var previousWord = words[i-1];
 
          if( REP.indexOf(nextWord) > -1  === true){
 
             if (isStringOn === true){
+                  ongoingString.push(currentWord);
                 var stringToAdd = ongoingString.join(' ');
-                console.log("added string ->",stringToAdd);
+                ///console.log("added string ->",stringToAdd);
                tokens.push(token("data","string",stringToAdd));
                ongoingString = [];
                isStringOn = false;
@@ -108,7 +112,7 @@ function tokeniser(statements){
          if(isStringOn === true && currentWord != STRING){
             ongoingString.push(currentWord);
          }
-         console.log("str status, isStringOn ->",isStringOn,"ongoingString ->",ongoingString);
+         ///console.log("str status, isStringOn ->",isStringOn,"ongoingString ->",ongoingString);
       }
    //}
 
@@ -117,35 +121,28 @@ function tokeniser(statements){
 
 //type name value
 function parser(tokens, output_id){
-   console.log("*** parser entered ***");
-   var output = document.getElementById(output_id).value;
+   ///console.log("*** parser entered ***");
+   //var output = document.getElementById(output_id).value;
    for(var i=0; i<tokens.length; i++){
+
       var currentToken= tokens[i];
       var nextToken=tokens[i+1];
       var previousToken=tokens[i-1];
+      var printStatements= [];
 
       if(currentToken["name"] === "equal"){
          global_vars[previousToken["value"]] = nextToken["value"];
+         debug(previousToken["value"]+" "+nextToken["value"]);
       }else
       if(currentToken["name"] === "print"){
-         printStatements=[];
-
-         var x =1;
-         while(tokens[i+x]["name"] != "new_line"  && tokens[i+x]["name"] != undefined){
-            console.log("t i+x",tokens[i+x]["name"]);
-            if(tokens[i+x]["name"] == "new_line"){
-               break;
-            }
-            if(tokens[i+x]["name"] === "var_name"){
-               printStatements.push(global_vars["value"]);
-            }else{
-               printStatements.push(tokens[i+x]["value"]);
-            }
-            x++;
+         if(nextToken["name"] === "var_name"){
+            printStatements.push(global_vars[nextToken["value"]]);
+         }else{
+            printStatements.push(nextToken["value"]);
          }
-
          var stringToPrint = printStatements.join(" ");
-         output+=(stringToPrint+NEWLINE);
+
+         document.getElementById(output_id).value+=(stringToPrint+NEWLINE);
       }
    }
 
@@ -154,14 +151,20 @@ function parser(tokens, output_id){
 function printToks(tokens, tok_id){
    for(var i=0;i<tokens.length;i++){
    var data = tokens[i];
-      document.getElementById(tok_id).value+=(data["name"]+data["value"]+data["type"]+NEWLINE);
+      document.getElementById(tok_id).value+=("token\ntype -> "+data["type"]+"\nname-> "+data["name"]+"\nvalue-> "+data["value"]+NEWLINE+NEWLINE);
    }
 }
 
 document.getElementById ("comp-but").addEventListener ("click", aaa, false);
 
 function aaa(){
-   printToks(tokeniser(lexicalAnalyser("source")), "tokens");
-   parser(tokeniser(lexicalAnalyser("source")), "output");
+    document.getElementById("debug").value="";
+    document.getElementById("output").value="";
+    //var tok = tokeniser(lexicalAnalyser("source"));
+    var stmt = lexicalAnalyser("source");
+    parser(tokeniser(stmt),"output");
+   //parser(tokeniser(lexicalAnalyser("source")), "output");
 }
+
+
 
